@@ -4,7 +4,11 @@
 *******************************/
 
 options { JAVA_UNICODE_ESCAPE = true;
-		  IGNORE_CASE = true; }
+		  IGNORE_CASE = true; 
+		  MULTI = true;
+    	  VISITOR = true;
+    	  NODE_DEFAULT_VOID = true;
+    	}
 
 /*********************************
 *** SECTION 2 - USER CODE ***
@@ -37,7 +41,8 @@ public class AlParse {
 				return;
 			}
 			try {
-				parser.Prog();
+				SimpleNode root = parser.Prog();
+				root.dump(" ");
 				System.out.println("Program parsed successfully.");
 			} catch (ParseException e) {
 				System.out.println(e.getMessage());
@@ -132,42 +137,42 @@ TOKEN : /* Numbers and identifiers */
 SECTION 4 - THE GRAMMAR & PRODUCTION RULES - WOULD NORMALLY START HERE 
 **************************************************************************/
 
-void Prog() : {}
+SimpleNode Prog() #Program : {}
 {
-  Decl_List() Function_List() Main()
+  Decl_List() Function_List() Main() { return jjtThis; }
 }
 
-void Decl_List() : {}
+void Decl_List() #void : {}
 {
   (Decl() <SEMICO> Decl_List())
   |	{}
 }
 
-void Decl() : {}
+void Decl() #dec : {}
 {
   Var_Decl()
 | Const_Decl()
 }
 
-void Var_Decl() : {}
+void Var_Decl() #var : {Token t;}
 {
-  <VAR> <ID> <COLON> Type()
+  <VAR> t = <ID> {jjtThis.value = t.image; } <COLON> Type()
 }
 
-void Const_Decl() : {}
+void Const_Decl() #cons : {Token t;}
 {
-  <CONST> <ID> <COLON> Type() <EQUA> Expression()
+  <CONST> t = <ID> {jjtThis.value = t.image; } <COLON> Type() <EQUA> Expression()
 }
 
-void Function_List() : {}
+void Function_List() #void : {}
 {
   (Function() Function_List())
 | {}
 }
 
-void Function() : {}
+void Function() #funct : {Token t;}
 {
-  Type() <ID> <LBRAC> Parameter_List() <RBRAC>
+  Type() t = <ID> {jjtThis.value = t.image; } <LBRAC> Parameter_List() <RBRAC>
   <LCB>
     Decl_List()
     Statement_Block()
@@ -175,25 +180,25 @@ void Function() : {}
   <RCB>
 }
 
-void Type() : {}
+void Type() #type : {Token t;}
 {
-  <INTEGER>
-| <BOOLEAN>
-| <VOID>
+  t = <INTEGER> {jjtThis.value = t.image; }
+| t = <BOOLEAN> {jjtThis.value = t.image; }
+| t = <VOID> {jjtThis.value = t.image; }
 }
 
-void Parameter_List() : {}
+void Parameter_List() #void : {}
 {
   Nemp_Parameter_List()
 | {}
 }
 
-void Nemp_Parameter_List() : {}
+void Nemp_Parameter_List() #npl : {Token t;}
 {
-  <ID> <COLON> Type() (<COMMA> Nemp_Parameter_List())?
+  t = <ID> {jjtThis.value = t.image; } <COLON> Type() (<COMMA> Nemp_Parameter_List())?
 }
 
-void Main() : {}
+void Main() #main : {}
 {
   <MAIN> <LCB> 
     Decl_List() 
@@ -201,83 +206,83 @@ void Main() : {}
   <RCB>
 }
 
-void Statement_Block() : {}
+void Statement_Block() #void : {}
 {
   (Statement() Statement_Block())
 | {}
 }
 
-void Statement() : {}
+void Statement() #statement : {Token t;}
 {
-  <ID> Statement_prime()
+  t = <ID> Statement_prime() {jjtThis.value = t.image; }
 | <LCB> Statement_Block() <RCB>
 | <IF> Condition() <LCB> Statement_Block() <RCB> <ELSE> <LCB> Statement_Block() <RCB>
 | <WHILE> Condition() <LCB> Statement_Block() <RCB>
 | <SCIP> <SEMICO>
 }
 
-void Statement_prime() : {}
+void Statement_prime() #void : {}
 {
   <EQUA> Expression() <SEMICO>
 | <LBRAC> Arg_List() <RBRAC> <SEMICO>
 }
 
-void Expression() : {}
+void Expression() #void : {}
 {
   <LBRAC> Expression() <RBRAC> exp_prime()
 | Fragment() exp_prime()
 }
 
-void exp_prime() : {}
+void exp_prime() #void : {}
 {
   Binary_Arith_Op() Fragment() exp_prime()
 | {}
 }
 
-void Binary_Arith_Op() : {}
+void Binary_Arith_Op() #void : {}
 {
   <PLUS_SIGN>
 | <MINUS_SIGN>
 }
 
-void Fragment() : {}
+void Fragment() #frag : {Token t;}
 {
-  [<MINUS_SIGN>] <ID> [<LBRAC> Arg_List() <RBRAC>]
-| <INT>
+  [<MINUS_SIGN>] t = <ID> {jjtThis.value = t.image; } [<LBRAC> Arg_List() <RBRAC>]
+| t = <INT> {jjtThis.value = t.image; }
 | <TRUE>
 | <FALSE>
 }
 
-void Cond_Prime() : {}
+void Cond_Prime() #void : {}
 {
 	(<LOG_OR> | <LOG_AND>) Condition() Cond_Prime()
 	|	{}
 }
 
-void Condition() : {}
+void Condition() #void : {}
 {
   <TILDA> Condition() Cond_Prime()
 | <LBRAC> Condition() <RBRAC> Cond_Prime()
 | Fragment() CompOp() Expression() Cond_Prime()
 }
 
-void CompOp() : {}
+void CompOp() #comparisons : {Token t;}
 {
-  <EQUATE>
-| <NOT_EQUA>
-| <LT>
-| <LTOET>
-| <GT>
-| <GTOET>
+  t = <EQUATE>{jjtThis.value = t.image; }#equals
+| t = <NOT_EQUA> {jjtThis.value = t.image; }#notequals
+| t = <LT> {jjtThis.value = t.image; }#lessthan
+| t = <LTOET> {jjtThis.value = t.image; }#lessthanequal
+| t = <GT> {jjtThis.value = t.image; }#greaterthan
+| t = <GTOET> {jjtThis.value = t.image; }#greaterthanequal
 }
 
-void Arg_List() : {}
+void Arg_List() #void : {}
 {
   Nemp_Arg_List()
 | {}
 }
 
-void Nemp_Arg_List() : {}
+void Nemp_Arg_List() #nal : {Token t;}
 {
-  <ID> (<COMMA> Nemp_Arg_List())?
+  t = <ID> {jjtThis.value = t.image; } (<COMMA> Nemp_Arg_List())?
 }
