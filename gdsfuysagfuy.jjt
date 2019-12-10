@@ -1,0 +1,283 @@
+//Section 1
+/*******************************
+*** SECTION 1 - OPTIONS ***
+*******************************/
+
+options { JAVA_UNICODE_ESCAPE = true;
+		  IGNORE_CASE = true; }
+
+/*********************************
+*** SECTION 2 - USER CODE ***
+*********************************/
+PARSER_BEGIN(AlParse)
+
+public class AlParse {
+
+	public static void main(String[] args) {
+
+		AlParse parser;
+		if (args.length == 0){ 
+			System.out.println("Reading from std input..");
+			parser = new AlParse(System.in);
+		}
+		else if (args.length == 1) {
+			try {
+				System.out.println("Reading file: " + args[0] + " . . .");
+				parser = new AlParse(new java.io.FileInputStream(args[0]));
+			}	catch (java.io.FileNotFoundException e) {
+				System.err.println("File " + args[0] + " not found.");
+				return;
+			}
+		}
+			else {
+				System.out.println("SLP Tokeniser: Usage is one of:");
+				System.out.println(" java SLPTokeniser < inputfile");
+				System.out.println("OR");
+				System.out.println(" java SLPTokeniser inputfile");
+				return;
+			}
+			try {
+				parser.Prog();
+				System.out.println("Program parsed successfully.");
+			} catch (ParseException e) {
+				System.out.println(e.getMessage());
+				System.out.println("Errrrrr");
+			}
+	}
+}
+PARSER_END(AlParse)
+
+TOKEN_MGR_DECLS :
+{
+static int commentNesting = 0;
+}
+
+
+/*****************************************
+*** SECTION 3 - TOKEN DEFINITIONS ***
+*****************************************/
+
+//Tokens - skips
+SKIP : /*** Ignoring spaces/tabs/newlines ***/
+{
+" "
+| "\t"
+| "\n"
+| "\r"
+| "\f"
+}
+SKIP : /* COMMENTS */
+{
+	< "//" (~["\n"])* >
+	| "/*" { commentNesting++; } : IN_COMMENT
+}
+<IN_COMMENT> SKIP :
+{
+	  "/*" { commentNesting++; }
+	| "*/" { commentNesting--;
+			if (commentNesting==0) {SwitchTo(DEFAULT);}}
+	| <~[]>
+}
+TOKEN :
+{
+	< COMMA : "," >
+|	< SEMICO : ";" >
+|	< COLON : ":" >
+|	< EQUA : "=" >
+|	< LCB : "{" >
+|	< RCB : "}" >
+|	< LBRAC : "(" >
+|	< RBRAC : ")" >
+|	< PLUS_SIGN : "+" >
+|	< MINUS_SIGN : "-" >
+|	< TILDA : "~" >
+|	< LOG_OR : "||" >
+|	< LOG_AND : "&&" >
+|	< EQUATE : "==" >
+|	< NOT_EQUA : "!=" >
+|	< LT : "<" >
+|	< LTOET : "<=" >
+|	< GT : ">" >
+|	< GTOET : ">=" >
+
+}
+
+TOKEN : /* RESERVED WORDS */ 
+{
+	< VAR: "var" >
+|	< CONST: "const" >
+|	< RETURN: "return" >
+|	< INTEGER: "integer" >
+|	< BOOLEAN: "boolean" >
+|	< VOID: "void" >
+|	< MAIN: "main" >
+|	< IF: "if" >
+|	< ELSE: "else" >
+|	< TRUE: "true" >
+|	< FALSE: "false" >
+|	< WHILE: "while" >
+|	< SCIP: "skip" >
+}
+
+TOKEN : /* Numbers and identifiers */
+{	
+	< #DIGIT : ["0" - "9"] >
+|	< #LETTER : ["a" - "z", "A" - "Z"] >
+|	< ID : <LETTER> ( <LETTER> | <DIGIT> | "_")* >
+|	< INT : "0" /*CAN BE 0*/ 
+	| ("-")? ["1"-"9"] (<DIGIT>)* > /*CANT START WITH 0*/
+}
+
+/*************************************************************************
+SECTION 4 - THE GRAMMAR & PRODUCTION RULES - WOULD NORMALLY START HERE 
+**************************************************************************/
+
+void Prog() : {}
+{
+  Decl_List() Function_List() Main()
+}
+
+void Decl_List() : {}
+{
+  (Decl() <SEMICO> Decl_List())
+  |	{}
+}
+
+void Decl() : {}
+{
+  Var_Decl()
+| Const_Decl()
+}
+
+void Var_Decl() : {}
+{
+  <VAR> <ID> <COLON> Type()
+}
+
+void Const_Decl() : {}
+{
+  <CONST> <ID> <COLON> Type() <EQUA> Expression()
+}
+
+void Function_List() : {}
+{
+  (Function() Function_List())
+| {}
+}
+
+void Function() : {}
+{
+  Type() <ID> <LBRAC> Parameter_List() <RBRAC>
+  <LCB>
+    Decl_List()
+    Statement_Block()
+    <RETURN> <LBRAC> (Expression() | {} ) <RBRAC> <SEMICO>
+  <RCB>
+}
+
+void Type() : {}
+{
+  <INTEGER>
+| <BOOLEAN>
+| <VOID>
+}
+
+void Parameter_List() : {}
+{
+  Nemp_Parameter_List()
+| {}
+}
+
+void Nemp_Parameter_List() : {}
+{
+  <ID> <COLON> Type() (<COMMA> Nemp_Parameter_List())?
+}
+
+void Main() : {}
+{
+  <MAIN> <LCB> 
+    Decl_List() 
+    Statement_Block() 
+  <RCB>
+}
+
+void Statement_Block() : {}
+{
+  (Statement() Statement_Block())
+| {}
+}
+
+void Statement() : {}
+{
+  <ID> Statement_prime()
+| <LCB> Statement_Block() <RCB>
+| <IF> Condition() <LCB> Statement_Block() <RCB> <ELSE> <LCB> Statement_Block() <RCB>
+| <WHILE> Condition() <LCB> Statement_Block() <RCB>
+| <SCIP> <SEMICO>
+}
+
+void Statement_prime() : {}
+{
+  <EQUA> Expression() <SEMICO>
+| <LBRAC> Arg_List() <RBRAC> <SEMICO>
+}
+
+void Expression() : {}
+{
+  <LBRAC> Expression() <RBRAC> exp_prime()
+| Fragment() exp_prime()
+}
+
+void exp_prime() : {}
+{
+  Binary_Arith_Op() Fragment() exp_prime()
+| {}
+}
+
+void Binary_Arith_Op() : {}
+{
+  <PLUS_SIGN>
+| <MINUS_SIGN>
+}
+
+void Fragment() : {}
+{
+  [<MINUS_SIGN>] <ID> [<LBRAC> Arg_List() <RBRAC>]
+| <INT>
+| <TRUE>
+| <FALSE>
+}
+
+void Cond_Prime() : {}
+{
+	(<LOG_OR> | <LOG_AND>) Condition() Cond_Prime()
+	|	{}
+}
+
+void Condition() : {}
+{
+  <TILDA> Condition() Cond_Prime()
+| <LBRAC> Condition() <RBRAC> Cond_Prime()
+| Fragment() CompOp() Expression() Cond_Prime()
+}
+
+void CompOp() : {}
+{
+  <EQUATE>
+| <NOT_EQUA>
+| <LT>
+| <LTOET>
+| <GT>
+| <GTOET>
+}
+
+void Arg_List() : {}
+{
+  Nemp_Arg_List()
+| {}
+}
+
+void Nemp_Arg_List() : {}
+{
+  <ID> (<COMMA> Nemp_Arg_List())?
+}
