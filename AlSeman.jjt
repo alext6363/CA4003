@@ -17,6 +17,8 @@ PARSER_BEGIN(AlParse)
 
 public class AlParse {
 
+    static STC stc;
+
 	public static void main(String[] args) {
 
 		AlParse parser;
@@ -41,13 +43,19 @@ public class AlParse {
 				return;
 			}
 			try {
+			    stc = new STC();
 				SimpleNode root = parser.Prog();
 				root.dump(" ");
 				System.out.println("Program parsed successfully.");
+				stc.print();
+
+				/*MyVisitor v = new MyVisitor();
+				root.jjtAccept(v, stc);*/
 			} catch (ParseException e) {
 				System.out.println(e.getMessage());
-				System.out.println("Errrrrr");
+				System.out.println("Error(s) have occurred...");
 			}
+
 	}
 }
 PARSER_END(AlParse)
@@ -148,18 +156,18 @@ void Decl_List() #void : {}
   |	{}
 }
 
-void Decl() #dec : {}
+void Decl() #decl : {}
 {
   Var_Decl()
 | Const_Decl()
 }
 
-void Var_Decl() #var : {Token t;}
+void Var_Decl() #variable : {Token t;}
 {
   <VAR> t = <ID> {jjtThis.value = t.image; } <COLON> Type()
 }
 
-void Const_Decl() #cons : {Token t;}
+void Const_Decl() #constant : {Token t;}
 {
   <CONST> t = <ID> {jjtThis.value = t.image; } <COLON> Type() <EQUA> Expression()
 }
@@ -170,7 +178,7 @@ void Function_List() #void : {}
 | {}
 }
 
-void Function() #funct : {Token t;}
+void Function() #function : {Token t;}
 {
   Type() t = <ID> {jjtThis.value = t.image; } <LBRAC> Parameter_List() <RBRAC>
   <LCB>
@@ -182,9 +190,9 @@ void Function() #funct : {Token t;}
 
 void Type() #type : {Token t;}
 {
-  t = <INTEGER> {jjtThis.value = t.image; }
-| t = <BOOLEAN> {jjtThis.value = t.image; }
-| t = <VOID> {jjtThis.value = t.image; }
+  t = <INTEGER> {jjtThis.value = t.image; } #intege
+| t = <BOOLEAN> {jjtThis.value = t.image; } #boolea
+| t = <VOID> {jjtThis.value = t.image; } #voide
 }
 
 void Parameter_List() #void : {}
@@ -193,7 +201,7 @@ void Parameter_List() #void : {}
 | {}
 }
 
-void Nemp_Parameter_List() #npl : {Token t;}
+void Nemp_Parameter_List() #nonempParamList : {Token t;}
 {
   t = <ID> {jjtThis.value = t.image; } <COLON> Type() (<COMMA> Nemp_Parameter_List())?
 }
@@ -239,16 +247,16 @@ void exp_prime() #void : {}
 | {}
 }
 
-void Binary_Arith_Op() #void : {}
+void Binary_Arith_Op() #AddSub : {Token t;}
 {
-  <PLUS_SIGN>
-| <MINUS_SIGN>
+  t = <PLUS_SIGN> {jjtThis.value = t.image; } #adding
+| t = <MINUS_SIGN> {jjtThis.value = t.image; } #subbing
 }
 
 void Fragment() #frag : {Token t;}
 {
-  [<MINUS_SIGN>] t = <ID> {jjtThis.value = t.image; } [<LBRAC> Arg_List() <RBRAC>]
-| t = <INT> {jjtThis.value = t.image; }
+  [<MINUS_SIGN>] t = <ID> {jjtThis.value = t.image; } [<LBRAC> Arg_List() <RBRAC>] #ideeee
+| t = <INT> {jjtThis.value = t.image; } #inty
 | <TRUE>
 | <FALSE>
 }
