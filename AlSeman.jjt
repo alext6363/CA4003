@@ -6,7 +6,6 @@
 options { JAVA_UNICODE_ESCAPE = true;
 		  IGNORE_CASE = true; 
 		  MULTI = true;
-    	  VISITOR = true;
     	  NODE_DEFAULT_VOID = true;
     	}
 
@@ -150,7 +149,7 @@ SimpleNode Prog() #Program : {}
   Decl_List() Function_List() Main() { return jjtThis; }
 }
 
-void Decl_List() #void : {}
+void Decl_List() : {}
 {
   (Decl() <SEMICO> Decl_List())
   |	{}
@@ -172,7 +171,7 @@ void Const_Decl() #constant : {Token t;}
   <CONST> t = <ID> {jjtThis.value = t.image; } <COLON> Type() <EQUA> Expression()
 }
 
-void Function_List() #void : {}
+void Function_List() : {}
 {
   (Function() Function_List())
 | {}
@@ -195,7 +194,7 @@ void Type() #type : {Token t;}
 | t = <VOID> {jjtThis.value = t.image; } #voide
 }
 
-void Parameter_List() #void : {}
+void Parameter_List() : {}
 {
   Nemp_Parameter_List()
 | {}
@@ -214,7 +213,7 @@ void Main() #main : {}
   <RCB>
 }
 
-void Statement_Block() #void : {}
+void Statement_Block() : {}
 {
   (Statement() Statement_Block())
 | {}
@@ -229,28 +228,28 @@ void Statement() #statement : {Token t;}
 | <SCIP> <SEMICO>
 }
 
-void Statement_prime() #void : {}
+void Statement_prime() : {}
 {
   <EQUA> Expression() <SEMICO>
 | <LBRAC> Arg_List() <RBRAC> <SEMICO>
 }
 
-void Expression() #void : {}
+void Expression() : {}
 {
   <LBRAC> Expression() <RBRAC> exp_prime()
 | Fragment() exp_prime()
 }
 
-void exp_prime() #void : {}
+void exp_prime() : {}
 {
   Binary_Arith_Op() Fragment() exp_prime()
 | {}
 }
 
-void Binary_Arith_Op() #AddSub : {Token t;}
+void Binary_Arith_Op() #AddSub : {}
 {
-  t = <PLUS_SIGN> {jjtThis.value = t.image; } #adding
-| t = <MINUS_SIGN> {jjtThis.value = t.image; } #subbing
+   <PLUS_SIGN> #adding
+|  <MINUS_SIGN> #subbing
 }
 
 void Fragment() #frag : {Token t;}
@@ -261,20 +260,20 @@ void Fragment() #frag : {Token t;}
 | <FALSE>
 }
 
-void Cond_Prime() #void : {}
+void Cond_Prime() : {}
 {
-	(<LOG_OR> | <LOG_AND>) Condition() Cond_Prime()
+	(<LOG_OR>#OR(2) | <LOG_AND>#AND(2) ) Condition() Cond_Prime()
 	|	{}
 }
 
-void Condition() #void : {}
+void Condition() : {}
 {
   <TILDA> Condition() Cond_Prime()
 | <LBRAC> Condition() <RBRAC> Cond_Prime()
 | Fragment() CompOp() Expression() Cond_Prime()
 }
 
-void CompOp() #comparisons : {Token t;}
+void CompOp() : {Token t;}
 {
   t = <EQUATE>{jjtThis.value = t.image; }#equals
 | t = <NOT_EQUA> {jjtThis.value = t.image; }#notequals
@@ -284,7 +283,7 @@ void CompOp() #comparisons : {Token t;}
 | t = <GTOET> {jjtThis.value = t.image; }#greaterthanequal
 }
 
-void Arg_List() #void : {}
+void Arg_List() : {}
 {
   Nemp_Arg_List()
 | {}
