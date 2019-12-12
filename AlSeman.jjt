@@ -47,9 +47,6 @@ public class AlParse {
 				root.dump(" ");
 				System.out.println("Program parsed successfully.");
 				stc.print();
-
-				/*MyVisitor v = new MyVisitor();
-				root.jjtAccept(v, stc);*/
 			} catch (ParseException e) {
 				System.out.println(e.getMessage());
 				System.out.println("Error(s) have occurred...");
