@@ -16,10 +16,12 @@ public class STC extends Object {
     //this method inserts items into the symbolTable
     public void insert(String id, String type, String descriptor, String scope) {
         LinkedList<String> scopeList = symboltable.get(scope);
-        if (scopeList != null) {
+        if (scopeList != null)
+        {
             scopeList.addFirst(id);
         }
-        else{
+        else
+        {
             scopeList = new LinkedList<>();
             scopeList.add(id);
             symboltable.put(scope, scopeList);
@@ -32,7 +34,7 @@ public class STC extends Object {
         String scope;
         Enumeration t = symboltable.keys();
 
-        System.out.printf("|%11s | %10s | %10s | %12s|\n", "ID", "Type", "Scope", "Description");
+        System.out.printf("|%9s | %11s | %11s | %13s|\n", "ID", "Type", "Scope", "Description");
         System.out.println("------------------------------------------------------");
         boolean check = false;
 
@@ -40,17 +42,19 @@ public class STC extends Object {
             scope = (String) t.nextElement();
             LinkedList<String> scopeList = symboltable.get(scope);
 
-            for (String id : scopeList) {
+            for (String id : scopeList)
+            {
                 String type = Types.get(id + scope);
                 String descriptor = Descriptor.get(id + scope);
-                System.out.printf("|%11s | %10s | %10s | %12s|\n", id, type, scope, descriptor);
+                System.out.printf("|%9s | %11s | %11s | %13s|\n", id, type, scope, descriptor);
                 check = true;
             }
             if (check == false) {
-                try {
+                try
+                {
                     t.nextElement();
                 } catch (NoSuchElementException e) {
-                    System.out.println("  *THERE ARE NO SYMBOLS TO OUTPUT FOR SYMBOL TABLE*");
+                    System.out.println(" *There are no symbols to output to this symbol table* ");
                 }
             }
         }
