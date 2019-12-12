@@ -146,7 +146,7 @@ SECTION 4 - THE GRAMMAR & PRODUCTION RULES - WOULD NORMALLY START HERE
 
 SimpleNode Prog() #Program : {}
 {
-  Decl_List() Function_List() Main() { return jjtThis; }
+  Decl_List() Function_List() Main() <EOF> { return jjtThis; }
 }
 
 void Decl_List() : {}
@@ -161,14 +161,19 @@ void Decl() #decl : {}
 | Const_Decl()
 }
 
-void Var_Decl() #variable : {Token t;}
+void Var_Decl() #variable : {}
 {
-  <VAR> t = <ID> {jjtThis.value = t.image; } <COLON> Type()
+  <VAR> ID() <COLON> Type()
 }
 
-void Const_Decl() #constant : {Token t;}
+void ID() #IDer : {Token t;}
 {
-  <CONST> t = <ID> {jjtThis.value = t.image; } <COLON> Type() <EQUA> Expression()
+  t = <ID> {jjtThis.value = t; }
+}
+
+void Const_Decl() #constant : {}
+{
+  <CONST> ID() <COLON> Type() <EQUA> Expression()
 }
 
 void Function_List() : {}
@@ -177,9 +182,9 @@ void Function_List() : {}
 | {}
 }
 
-void Function() #function : {Token t;}
+void Function() #function : {}
 {
-  Type() t = <ID> {jjtThis.value = t.image; } <LBRAC> Parameter_List() <RBRAC>
+  Type() ID() <LBRAC> Parameter_List() <RBRAC>
   <LCB>
     Decl_List()
     Statement_Block()
@@ -187,11 +192,11 @@ void Function() #function : {Token t;}
   <RCB>
 }
 
-void Type() #type : {Token t;}
+String Type() #type : {Token t;}
 {
-  t = <INTEGER> {jjtThis.value = t.image; } #intege
-| t = <BOOLEAN> {jjtThis.value = t.image; } #boolea
-| t = <VOID> {jjtThis.value = t.image; } #voide
+  t = <INTEGER> {jjtThis.value = t; return t.image; } #intege
+| t = <BOOLEAN> {jjtThis.value = t; return t.image;} #boolea
+| t = <VOID> {jjtThis.value = t; return t.image;} #voide
 }
 
 void Parameter_List() : {}
@@ -200,10 +205,12 @@ void Parameter_List() : {}
 | {}
 }
 
-void Nemp_Parameter_List() #nonempParamList : {Token t;}
+void Nemp_Parameter_List() : {}
 {
-  t = <ID> {jjtThis.value = t.image; } <COLON> Type() (<COMMA> Nemp_Parameter_List())?
+  ID() <COLON> Type()#parameter(2) (<COMMA> Nemp_Parameter_List())?
 }
+
+
 
 void Main() #main : {}
 {
@@ -219,13 +226,13 @@ void Statement_Block() : {}
 | {}
 }
 
-void Statement() #statement : {Token t;}
+void Statement() #statement : {}
 {
-  t = <ID> Statement_prime() {jjtThis.value = t.image; }
+  ID() Statement_prime()
 | <LCB> Statement_Block() <RCB>
-| <IF> Condition() <LCB> Statement_Block() <RCB> <ELSE> <LCB> Statement_Block() <RCB>
-| <WHILE> Condition() <LCB> Statement_Block() <RCB>
-| <SCIP> <SEMICO>
+| <IF> Condition() #conditio <LCB> Statement_Block() <RCB> <ELSE> <LCB> Statement_Block() <RCB> #iffy(3)
+| <WHILE> Condition() #conditio <LCB> Statement_Block() <RCB> #whiley(2)
+| <SCIP> <SEMICO> #skippy
 }
 
 void Statement_prime() : {}
@@ -252,17 +259,17 @@ void Binary_Arith_Op() #AddSub : {}
 |  <MINUS_SIGN> #subbing
 }
 
-void Fragment() #frag : {Token t;}
+void Fragment() #frag : {}
 {
-  [<MINUS_SIGN>] t = <ID> {jjtThis.value = t.image; } [<LBRAC> Arg_List() <RBRAC>] #ideeee
-| t = <INT> {jjtThis.value = t.image; } #inty
-| <TRUE>
-| <FALSE>
+  [<MINUS_SIGN>] ID() [<LBRAC> Arg_List() <RBRAC>] #ideeee
+| <INT> #inty
+| <TRUE>#truey
+| <FALSE>#falsey
 }
 
 void Cond_Prime() : {}
 {
-	(<LOG_OR>#OR(2) | <LOG_AND>#AND(2) ) Condition() Cond_Prime()
+	(<LOG_OR>#OR(2) | <LOG_AND>#AND(2) ) Condition() #Condition Cond_Prime()
 	|	{}
 }
 
@@ -275,12 +282,12 @@ void Condition() : {}
 
 void CompOp() : {Token t;}
 {
-  t = <EQUATE>{jjtThis.value = t.image; }#equals
-| t = <NOT_EQUA> {jjtThis.value = t.image; }#notequals
-| t = <LT> {jjtThis.value = t.image; }#lessthan
-| t = <LTOET> {jjtThis.value = t.image; }#lessthanequal
-| t = <GT> {jjtThis.value = t.image; }#greaterthan
-| t = <GTOET> {jjtThis.value = t.image; }#greaterthanequal
+  <EQUATE> #EqualsEquals
+| <NOT_EQUA>#notequals
+| <LT>#lessthan
+| <LTOET>#lessthanequal
+| <GT>#greaterthan
+| <GTOET> #greaterthanequal
 }
 
 void Arg_List() : {}
@@ -289,7 +296,7 @@ void Arg_List() : {}
 | {}
 }
 
-void Nemp_Arg_List() #nal : {Token t;}
+void Nemp_Arg_List() #nal : {}
 {
-  t = <ID> {jjtThis.value = t.image; } (<COMMA> Nemp_Arg_List())?
+  ID() (<COMMA> Nemp_Arg_List())?
 }
